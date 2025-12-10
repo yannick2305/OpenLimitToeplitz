@@ -132,10 +132,9 @@ addRequired(p, 'm');
 addParameter(p, 'Filename', 'CollapsedSymbolHomotopy');
 parse(p, theta, fp, a, m, varargin{:});
 
-num_frames = 300;
+num_frames = 200;
 filename = p.Results.Filename;
 frame_rate = 10;
-
 
 % Ensure column vectors
 theta = theta(:);
@@ -217,8 +216,8 @@ for k = 1:num_frames
     max_radius = max(abs([fp; target]));
     xlim([-1.5, 1.5] * max_radius);
     ylim([-1.5, 1.5] * max_radius);
-    xlabel('Real');
-    ylabel('Imaginary');
+    xlabel('$\mathrm{Re}$', 'Interpreter', 'latex', 'FontSize', 18);
+    ylabel('$\mathrm{Im}$', 'Interpreter', 'latex', 'FontSize', 18); 
     legend({'$e^{i\theta}$', '$p(e^{i\theta})$'}, 'Interpreter', 'latex', 'FontSize', 28);
     set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 24);
    
@@ -234,8 +233,8 @@ for k = 1:num_frames
     grid on;
     ylim([-0.07; 0.07]);
     xlim([min(real(eig(T)))-0.05, max(real(eig(T)))+0.05])
-    xlabel('Real');
-    ylabel('Imaginary');
+    xlabel('$\mathrm{Re}$', 'Interpreter', 'latex', 'FontSize', 18);
+    ylabel('$\mathrm{Im}$', 'Interpreter', 'latex', 'FontSize', 18); 
     legend({'$f\big(p(e^{i\theta})\big)$'}, 'Interpreter', 'latex', 'FontSize', 28);
     set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 24);
 
@@ -252,6 +251,24 @@ if ~isempty(filename)
     close(v);
     fprintf('Movie saved to: %s\n ', filename);
 end
+
+gif_filename = 'homotopyCircle.gif';
+frame_delay = 1 / frame_rate;
+
+for k = 1:num_frames
+    [img, cmap] = rgb2ind(frame2im(homotopy_movie(k)), 256);
+
+    if k == 1
+        imwrite(img, cmap, gif_filename, ...
+                'gif', 'LoopCount', Inf, ...
+                'DelayTime', frame_delay);
+    else
+        imwrite(img, cmap, gif_filename, ...
+                'gif', 'WriteMode', 'append', ...
+                'DelayTime', frame_delay);
+    end
+end
+
 
 end
 
