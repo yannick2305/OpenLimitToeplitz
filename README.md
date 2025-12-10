@@ -15,3 +15,5 @@
 ## II.1 Homotopic transformation of the unit circle
 <p align="center"> <img src="Figures/homotopy.gif" alt="Homotopy to Lambda" width="1200"/> <br> <em>Figure 1: A Homotopic transfromation from the unit torus to the set L(f), uniformly collapses the spectrum. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
 
+<p align="center"> <img src="Figures/homotopyCircle.gif" alt="Scaled unit circle" width="1200"/> <br> <em>Figure 1: A simple scaling of the unit torus is not enough to uniformly collapse the symbol function. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
+
