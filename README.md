@@ -11,3 +11,7 @@
 **Abstract:** We provide the complete computational framework supporting the theoretical results in [1].
 
   <sub>Last updated: December 14, 2025</sub>
+
+## II.1 Homotopic transformation of the unit circle
+<p align="center"> <img src="Figures/homotopy.gif" alt="Homotopy to Lambda" width="1200"/> <br> <em>Figure 1: A Homotopic transfromation from the unit torus to the set L(f), uniformly collapses the spectrum. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
+
