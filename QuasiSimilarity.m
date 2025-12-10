@@ -1,39 +1,39 @@
 %{
     ----------------------------------------------------------------------
     Author(s):    [Erik Orvehed HILTUNEN , Yannick DE BRUIJN]
-    Date:         [November 2025]
+    Date:         [December 2025]
     Description:  [Asymptotic Similarity Transform for Toeplitz matrices]
     ----------------------------------------------------------------------
 %}
 
 clc
-clear all;
+clear;
 close all;
 
-% --- Parameters ---
-    n = 9;              % Truncation size for a_k
-    p = 4.5;            % Decay rate upwards
-    q = 4.5;            % Decay rate downwards
+% ==== Parameters ====
+    m = 9;              % Truncation size for a_k
+    p = 3.5;            % Decay rate upwards
+    q = 4.8;            % Decay rate downwards
     DimT = 100;         % Dimension of finite Toeplitz matrix to simulate open limit
-    num_lambda = 51;    % Number of plotting points (keep it large)
+    num_lambda = 100;   % Number of plotting points (50-300)
     fs = 18;            % Fontsize for annotation
     
-% --- Generate sequence a_k ---
-    col = zeros(n,1);
-    row = zeros(1,n+1);
+
+% ==== Generate m-bsned Dummy Toeplitz Matrix ====
+    col = zeros(m,1);
+    row = zeros(1,m+1);
     
     % --- Add noise to the coeffiients ---
     ai = 1;
-    bi = 2;
+    bi = 1;
 
-    col(1) = 1; % Diagonal element
+    col(1) = 1; 
     row(1) = 1;
 
-    % Downward decay (sub-diagonals)
-    for k = 1:n
+    % --- Populate above and below diagonals ---
+    for k = 1:m
         r = ai + (bi-ai)*rand;
         col(k) = r / ((k+1)^q);
-
         r = ai + (bi-ai)*rand;
         row(k+1) = r / ((k+1)^p);
     end
@@ -45,200 +45,227 @@ close all;
     T = fourier_to_toeplitz(a, DimT);
     eigT = sort(eig(T));
 
-    % --- Get initial Guess in the open limit ---
-    lambda_range = [min(real(eigT)), max(real(eigT))];
-    lambda_start = ( lambda_range(end) + lambda_range(1) ) / 2;
 
-    % --- Open Limit ---
-    [lambda_interval, diagnostics] = find_conjugate_interval(a, lambda_start);
+% ==== Approximate the open limit ====
+    % --- Get initial guess inside the open limit ---
+    lambda_start = ( min(real(eigT)) + max(real(eigT)) ) / 2;
 
-% --- Approximate conjugate root set ---
-    % --- Generate frequency range ---
-    lambda_vals = linspace(lambda_interval(1), lambda_interval(2), num_lambda);
+    % --- Adaptive Computation of the Open Limit ---
+     [lambda_interval(1), lambda_interval(2)]  = adaptive_equal_mod_interval(a, lambda_start);
 
-    % --- Preallocate for all polynomial coefficients ---
-    % P(z) = Q(z) - lambda*z^m
-    % We need to subtract lambda from the coefficient of z^m
+
+% ==== Approximate conjugate root set Λ(f) ====
+    % --- Get sampling which is close to the DOS (Uniform spacing on Λ(f) ---
+    t = linspace(0, 1, num_lambda);
+    lambda_vals = lambda_interval(1) + (lambda_interval(2) - lambda_interval(1)) * (0.5 * (1 - cos(pi*t)));
+    
+    % --- Plot the Density of states of the sampling ---
+    %{
+    histogram(lambda_vals, floor(num_lambda/4), 'Normalization', 'pdf');
+    xlabel('Eigenvalue');
+    ylabel('Density of States');
+    %}
+
+    % --- Preallocate for all polynomial coefficients [P(z) = Q(z) - lambda*z^m] ---
     P_coeffs_matrix = repmat(a(:), 1, num_lambda);
     
-    % The coefficient of z^m is at position (m+1) in the array
-    % Subtract lambda values from that position
-    P_coeffs_matrix(n + 1, :) = P_coeffs_matrix(n + 1, :) - lambda_vals;
+    % The coefficient of z^m is at position (m+1) in the array and substract lambda
+    P_coeffs_matrix(m + 1, :) = P_coeffs_matrix(m + 1, :) - lambda_vals;
     
     % --- Compute all roots at once ---
-    all_roots = zeros(2*n, num_lambda);
+    all_roots = zeros(2*m, num_lambda);
     for k = 1:num_lambda
         all_roots(:, k) = roots(P_coeffs_matrix(:, k));
     end
     
     % --- Sort roots by magnitude for each lambda ---
     [~, sort_idx] = sort(abs(all_roots), 1);
-    % Convert linear indices for sorted access
-    linear_idx = sort_idx + (0:num_lambda-1) * (2*n);
+    linear_idx = sort_idx + (0:num_lambda-1) * (2*m);
     all_roots_sorted = all_roots(linear_idx);
     
     % --- Extract m-th and (m+1)-th roots ---
-    candidate_roots = all_roots_sorted(n:n+1, :);
+    candidate_roots = all_roots_sorted(m:m+1, :);
+
+    % --- Filter to keep only pairs with similar modulus ---
+    tolerance = 1e-8;  % keep in mind rootsolver has its limits
+    mod_n  = abs(candidate_roots(1, :));
+    mod_n1 = abs(candidate_roots(2, :));
     
+    % Find pairs where moduli are approximately equal
+    similar_modulus = abs(mod_n - mod_n1) ./ max(mod_n, mod_n1) < tolerance;
+    
+    % Keep only the filtered roots
+    candidate_roots = candidate_roots(:, similar_modulus);
+
     % --- Check if they have approximately the same modulus ---
     openLimit = [candidate_roots(1, :), candidate_roots(2, :)];
 
+    phase = angle(openLimit(:));
+    [~, sortIdx] = sort(phase);
+    openLimit_sorted = openLimit(sortIdx);
 
-% --- Plot the set Λ(f) ---
-    figure;
-    plot(real(openLimit), imag(openLimit), 'kx', 'LineWidth', 2.5)
-    set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-    grid on;
-    axis equal;
-    box on;
-    hold off;
+    % --- Remove duplicated as they mess up the weights in integral ---
+    openLimit_sorted = merge_close_points(openLimit_sorted, 1e-4);
+    phase_sorted = angle(openLimit_sorted(:));
 
 
-% --- Compute Fourier coefficients of f(p(z)) numerically  ---
+    % --- Plot the set Λ(f) ---
+    %
+        wraparound_OpenLimit = [openLimit_sorted, openLimit_sorted(1)];
+        figure;
+        plot(real(wraparound_OpenLimit), imag(wraparound_OpenLimit), 'k-', 'LineWidth', 2.5)
+        hold on;
+        % ---- unit circle ----
+        theta = linspace(0, 2*pi, 300);
+        plot(cos(theta), sin(theta), 'r-', 'LineWidth', 2);
+        %plot(real(openLimit_sorted), imag(openLimit_sorted), 'bx', 'LineWidth', 2.5)
+        %legend({'$\Lambda(f)$', 'Unit torus', ''}, 'Interpreter', 'latex', 'FontSize', 18);
+        set(gcf, 'Position', [100, 100, 300, 300]);
+        set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
+        xlabel('$\mathrm{Re}$', 'Interpreter', 'latex', 'FontSize', 18);
+        ylabel('$\mathrm{Im}$', 'Interpreter', 'latex', 'FontSize', 18); 
+        grid on;
+        axis equal;
+        box on;
+        hold off;
+    %}
 
-    % --- Retrieve the phase ---
-    phase = zeros(length(openLimit),1);
-    for i = 1:length(openLimit)
-        phase(i) = angle(openLimit(i));
-    end
-    
+
+% ==== Compute Fourier coefficients of f(p(z)) numerically  ====
     % --- Evaluate f(p(z)) on the torus ---
-    N = length(openLimit);
-    fp_values = zeros(N, 1);
+    k_values = -m:m;
+    powers_matrix = openLimit_sorted(:).^(-k_values);  % N x (2n+1) matrix
     
-    for j = 1:N
-        for k = -n:n
-            k_idx = k + n + 1; 
-            fp_values(j) = fp_values(j) + a(k_idx) * openLimit(j)^(-k);
-        end
-    end
+    % --- Vectorized sum ---
+    fp_values = powers_matrix * a(:);
 
+    % --- Clean up data ---
     fp_values = real(fp_values);
 
-    [phase_sorted, sort_idx] = sort(phase);
-    fp_sorted = fp_values(sort_idx);
-    
-    [phase_unique, unique_idx] = unique(phase_sorted); 
-    fp_unique = fp_sorted(unique_idx);  
-    
-    phase_unique = [-pi; phase_unique];   
-    fp_unique    = [fp_unique(end); fp_unique];       
+    % --- Wrap around ---
+    phase_sorted = [-pi; phase_sorted; pi];
+    fp_values    = [ fp_values(end); fp_values; fp_values(end)];
 
- 
+    % --- Plot the function f(p(torus))
+    %{
     figure;
-    plot(phase_unique, fp_unique);
+    plot(phase_sorted, fp_values);
     hold off;
+    %}
 
     % --- Compute the Fourier Transform of f(p(z)) ---
+    F_range = m+16;
+    FourierFP = fourier_coefficients_spectral(phase_sorted, fp_values, F_range);
 
-    F_range = n;
-    FourierFP = fourier_coefficients_spectral(phase_unique, fp_unique, F_range);
-
-    % --- Plot the decay of the Fouier Coefficients of f(p(z)) ---
+    % --- Plot the decay in the Fourier Coefficients ---
+    %{
     figure;
-    loglog(1:F_range, abs(FourierFP(F_range+1: 2*F_range)), 'k.', 'LineWidth', 1.5)
-    hold on
-    plot(row)
-    set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-    grid on;
-    hold off;
+    plot(1:length(FourierFP), log(abs(FourierFP)));
+    %}
 
+% ==== Quasi Similarity Transformed Toeplitz matrix ====
     % --- Toeplitz matrix for deformed path ---
     T_b = fourier_to_toeplitz(FourierFP, DimT);
     eigT_b = sort(eig(T_b));
-    similar = norm(eigT - eigT_b);
-    fprintf('Similarity Coefficient: %f\n', similar);
 
-% --- Plot the eigenvalues before and after asymptotic Similarity transform ---
+    % --- Plot the eigenvalues before and after asymptotic Similarity transform ---
+    %
     figure;
     plot(real(eigT), imag(eigT), 'bx', 'MarkerSize', 8, 'LineWidth', 1.5);
     hold on;
     plot(real(eigT_b), imag(eigT_b), 'ro', 'MarkerSize', 8, 'LineWidth', 1.5);
     grid on;
     box on;
+    xlim([0.96*min(real(eigT)), 1.03*max(real(eigT))])
+    ylim([-0.005, 0.005])
     xlabel('$\mathrm{Re}(\sigma(\mathbf{T}_N))$', 'Interpreter', 'latex', 'FontSize', 14);
     ylabel('$\mathrm{Im}(\sigma(\mathbf{T}_N))$', 'Interpreter', 'latex', 'FontSize', 14); 
     set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-    set(gcf, 'Position', [100, 100, 500, 250]); 
+    set(gcf, 'Position', [100, 100, 500, 300]); 
     axis equal;
     hold off;
+    %}
 
-
-
-%% 
-
-    % Diagonalize T: T = P * D * P^(-1)
-    [P, D] = eig(T);
-    [D_sorted, sort_idx] = sort(diag(D), 'descend'); % or 'ascend'
-    D = diag(D_sorted);
-    P = P(:, sort_idx);
+% ==== Hirschman density of states ====
     
-    % Diagonalize T_b: T_b = Q * D_b * Q^(-1)
-    [Q, D_b] = eig(T_b);
-    [D_b_sorted, sort_idx_b] = sort(diag(D_b), 'descend'); % or 'ascend'
-    D_b = diag(D_b_sorted);
-    Q = Q(:, sort_idx_b);
+    lambda_interval = linspace(lambda_interval(1), lambda_interval(2), 500);
+    deriv_sums = zeros(size(lambda_interval));
     
-    % Check that eigenvalues are the same
-    disp('Are eigenvalues equal?');
-    disp(['D diagonal  : ', num2str(real(sort(diag(D)))')]);
-    disp(['D_b diagonal: ', num2str(real(sort(diag(D_b)))')]);
-    
-    fprintf('\n');
-    invP = P \ eye(DimT);
-    % Compute the similarity transformation matrix
-    S = invP * Q;
-    invS = S \ eye(DimT);
+    for i = 1:length(lambda_interval)
+        deriv_sums(i) = 1/(2*pi) * 1/g(lambda_interval(i), a) * compute_g_derivative_sum(lambda_interval(i), a);
+        deriv_sums(i) = min(20, deriv_sums(i));
+    end
 
-    % Verify: T = S * T_b * S^(-1)
-    T_from_Tb = S * T_b * invS;
-    MatrixDiff = T - T_from_Tb;
+    % --- Plot the DOS against the empirical measure ---
+    %{
+    figure;
+    histogram(eigT_b, floor(DimT/2), 'Normalization', 'pdf');
+    hold on;
+    plot(lambda_interval, deriv_sums, 'LineWidth', 2);
+    set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
+    set(gcf, 'Position', [100, 100, 600, 250]); 
+    xlabel('Eigenvalue', 'Interpreter', 'latex', 'FontSize', 14);
+    ylabel('Density of States', 'Interpreter', 'latex', 'FontSize', 14); 
+    box on;
+    hold off;
+    %}
 
 
 %% --- Defining functions ---
 
+
 function ck = fourier_coefficients_spectral(phase, fp_values, K)
-    % First, interpolate using barycentric trigonometric interpolation
-    % to get uniformly-spaced values, then use FFT
     
     N = length(phase);
-    M = max(2*K+1, 2*N);  % target uniform grid size
-    
-    % Create uniform grid
+    M = max(2*K+1, 2*N); 
     theta_uniform = (0:M-1)' * 2*pi/M;
     
-    % Barycentric trigonometric interpolation
+    % --- Get uniform sampling ---
     fp_uniform = trig_barycentric_interp(phase, fp_values, theta_uniform);
     
-    % Now use standard FFT (spectral accuracy!)
+    % --- Use standard (uniform) FFT ---
     fft_result = fft(fp_uniform) / M;
     
-    % Extract coefficients
+    % --- Extract coefficients ---
     ck = zeros(2*K+1, 1);
     ck(K+1) = fft_result(1);
     ck(K+2:end) = fft_result(2:K+1);
     ck(1:K) = fft_result(end-K+1:end);
 end
 
+
 function f_interp = trig_barycentric_interp(x, f, x_target)
-    % Barycentric formula for trigonometric interpolation
+
     N = length(x);
-    M = length(x_target);
-    f_interp = zeros(M, 1);
-    
-    for j = 1:M
-        if any(abs(x_target(j) - x) < 1e-14)
-            % Exact node
-            idx = find(abs(x_target(j) - x) < 1e-14, 1);
-            f_interp(j) = f(idx);
-        else
-            % Barycentric interpolation
-            weights = (-1).^(0:N-1)' ./ sin((x_target(j) - x)/2);
-            f_interp(j) = sum(weights .* f) / sum(weights);
-        end
+
+    % Precompute barycentric weights (independent of x_target)
+    w = (-1).^(0:N-1)';   % column vector
+
+    % Build matrix of differences: M×N
+    % each row j is x_target(j) - x(:)'
+    D = x_target(:) - x(:).';
+
+    % Detect exact hits (machine precision)
+    hit = abs(D) < 1e-14;
+
+    % Avoid division by zero in denominator
+    D(hit) = Inf;
+
+    % Barycentric kernel: w / sin((x_target - x)/2)
+    K = w.' ./ sin(D/2);     % w.' ensures broadcasting over rows
+
+    % Compute numerator and denominator
+    num = K * f;             % M×N times N×1 → M×1
+    den = sum(K, 2);         % sum rows → M×1
+
+    f_interp = num ./ den;
+
+    % Insert exact-match values
+    if any(hit, "all")
+        [j_idx, x_idx] = find(hit);
+        f_interp(j_idx) = f(x_idx);
     end
 end
-
 
 
 function T = fourier_to_toeplitz(a, dimT)
@@ -256,265 +283,179 @@ function T = fourier_to_toeplitz(a, dimT)
     end
    
     T = toeplitz(col, row);
+
 end
 
 
-function [lambda_interval, diagnostics] = find_conjugate_interval(a, lambda_init, options)
-    % Find the interval where m-th and (m+1)-th largest roots transition from phase 0 to ±π
-    % Assumes roots are conjugates throughout and phase is monotone in lambda
+function [lambdaL, lambdaR] = adaptive_equal_mod_interval(a, lambda0)
+
+    % tolerance for detecting equality
+    tol = 1e-12;
+
+    % initial step size
+    step0 = 0.1;
+    min_step = 1e-12;
+
+    % determine m
+    m = (length(a)-1)/2;
+
+    % build polynomial template
+    coeff_Q = zeros(1,2*m+1);
+    for j = -m:m
+        coeff_Q(m-j+1) = a(j+m+1);
+    end
+
+    % helper: m-th and (m+1)-th modulus difference
+
+    %
+    function F = diff_mod(lambda)
+        c = coeff_Q;
+        c(m+1) = c(m+1) - lambda;
+        r = roots(c);
+        r = sort(abs(r));
+        F = r(m+1) - r(m);
+    end
+    
+
+    % -------------------------------
+    % Find RIGHT endpoint
+    % -------------------------------
+    lambda = lambda0;
+    step = step0;
+
+    % ensure we start inside interval
+    if abs(diff_mod(lambda)) > tol
+        error('Initial guess lambda0 is not inside equal-modulus interval.');
+    end
+
+    while true
+        % tentative step
+        lambda_try = lambda + step;
+        F_try = diff_mod(lambda_try);
+
+        if abs(F_try) <= tol
+            % still inside, check if stepping further breaks equality
+            lambda_test = lambda_try + tol;
+            if abs(diff_mod(lambda_test)) > tol
+                lambdaR = lambda_try;
+                break;
+            else
+                lambda = lambda_try;   % move forward
+            end
+
+        else
+            % outside ⇒ shrink step
+            step = step / 2;
+            if step < min_step
+                lambdaR = lambda_try;
+                break;
+            end
+        end
+    end
+
+    % -------------------------------
+    % Find LEFT endpoint
+    % -------------------------------
+    lambda = lambda0;
+    step = step0;
+
+    while true
+        lambda_try = lambda - step;
+        F_try = diff_mod(lambda_try);
+
+        if abs(F_try) <= tol
+            lambda_test = lambda_try - tol;
+            if abs(diff_mod(lambda_test)) > tol
+                lambdaL = lambda_try;
+                break;
+            else
+                lambda = lambda_try;
+            end
+
+        else
+            % outside ⇒ shrink step
+            step = step / 2;
+            if step < min_step
+                lambdaL = lambda_try;
+                break;
+            end
+        end
+    end
+end
+
+
+function merged = merge_close_points(openLimit, tol)
+    
+    n = length(openLimit);
+    if n == 0
+        merged = [];
+        return;
+    end
+    
+    merged = openLimit;
+    
+    % Check if first and last elements should merge
+    if abs(openLimit(end) - openLimit(1)) <= tol
+        merged(1) = mean([openLimit(1), openLimit(end)]);
+        merged(end) = [];  % Remove last element
+    end
+    
+    % Check if two middle elements should merge
+    if n >= 2
+        mid1 = floor(n / 2);
+        mid2 = mid1 + 1;
+        
+        if abs(merged(mid2) - merged(mid1)) <= tol
+            merged(mid1) = mean([merged(mid1), merged(mid2)]);
+            merged(mid2) = [];  % Remove second middle element
+        end
+    end
+end
+
+
+function g_val = g(lambda, a)
+    % Compute g(lambda) = |a(end)| * prod_{k=m+1}^{2m} |z_k(lambda)|
     %
     % Inputs:
-    %   a            - Coefficient vector of length 2*m+1
-    %   lambda_init  - Initial guess for lambda (should be inside the interval)
-    %   options      - (optional) struct with fields:
-    %                  .step_size (default 0.1) - initial step size
-    %                  .tol (default 1e-10) - tolerance for convergence
-    %                  .check_radius (default 0.01) - radius for checking if phase is stuck
-    %
-    % Outputs:
-    %   lambda_interval - [lambda_start, lambda_end] 
-    %   diagnostics     - struct with additional information
+    %   lambda - complex value
+    %   a - coefficient array (must have odd length 2m+1)
     
-    % Set default options
-    if nargin < 3
-        options = struct();
-    end
-    if ~isfield(options, 'step_size')
-        options.step_size = 0.1;
-    end
-    if ~isfield(options, 'tol')
-        options.tol = 1e-10;
-    end
-    if ~isfield(options, 'check_radius')
-        options.check_radius = 1e-8;
-    end
+    m = (length(a)-1)/2;
     
-    % Determine m from the length of a
-    m = (length(a) - 1) / 2;
-    if mod(length(a), 2) == 0 || m ~= floor(m)
-        error('Vector a must have odd length (2*m+1)');
-    end
-    
-    % Build coeff_Q from a
-    coeff_Q = zeros(1, 2*m + 1);
+    % Build polynomial template
+    coeff_Q = zeros(1, 2*m+1);
     for j = -m:m
-        coeff_Q(m - j + 1) = a(j + m + 1);
+        coeff_Q(m-j+1) = a(j+m+1);
     end
     
-    idx_lambda_m = m + 1;  % Index where lambda appears
+    % Modify polynomial: Q(z) - lambda
+    c = coeff_Q;
+    c(m+1) = c(m+1) - lambda;
     
-    % Helper function: compute phase of m-th largest root
-    function [phase_val, root_m] = compute_root_phase(lambda)
-        % Build polynomial coefficients for this lambda
-        coeffs = coeff_Q;
-        coeffs(idx_lambda_m) = coeffs(idx_lambda_m) - lambda;
-        
-        % Find roots
-        r = roots(coeffs);
-        
-        % Sort by magnitude (ascending)
-        [~, sort_idx] = sort(abs(r));
-        r_sorted = r(sort_idx);
-        
-        % Pick m-th largest (end is largest)
-        root_m = r_sorted(end - m + 1);
-        
-        % Compute phase
-        phase_val = angle(root_m);
+    % Find roots and sort by magnitude
+    r = roots(c);
+    r_abs = abs(r);
+    [~, idx] = sort(r_abs);
+    r_sorted = r(idx);
+    
+    % Compute g(lambda) = |a(end)| * product of larger m roots
+    larger_roots = r_sorted(m+1:2*m);
+    g_val = abs(a(end)) * prod(abs(larger_roots));
+end
+
+
+function deriv_sum = compute_g_derivative_sum(lambda_real, a, h)
+    % Compute ∂g/∂n₁ + ∂g/∂n₂ for Hirschman DOS
+    
+    if nargin < 3
+        h = 1e-5;
     end
     
-    % Helper to compute distance to target phase
-    function dist = phase_distance(phase_val, target)
-        if abs(target) < 0.1
-            % Target is 0
-            dist = abs(phase_val);
-        else
-            % Target is ±π
-            dist = min(abs(phase_val - pi), abs(phase_val + pi));
-        end
-    end
+    lambda_complex = lambda_real + 0i;
     
-    % Helper to check if phase is stuck at boundary
-    function is_stuck = check_if_stuck(lambda, target_phase)
-        [phase_center, ~] = compute_root_phase(lambda);
-        dist_center = phase_distance(phase_center, target_phase);
-        
-        % If not close to target, definitely not stuck
-        if dist_center > options.tol * 10
-            is_stuck = false;
-            return;
-        end
-        
-        % Check in a small neighborhood
-        [phase_plus, ~] = compute_root_phase(lambda + options.check_radius);
-        [phase_minus, ~] = compute_root_phase(lambda - options.check_radius);
-        
-        dist_plus = phase_distance(phase_plus, target_phase);
-        dist_minus = phase_distance(phase_minus, target_phase);
-        
-        % If phase doesn't change in neighborhood, we're stuck (past boundary)
-        if abs(dist_plus - dist_center) < options.tol && abs(dist_minus - dist_center) < options.tol
-            is_stuck = true;
-        else
-            is_stuck = false;
-        end
-    end
+    g_plus = g(lambda_complex + 1i*h, a);
+    g_center = g(lambda_complex, a);
+    g_minus = g(lambda_complex - 1i*h, a);
     
-    % Step 1: Evaluate phase at initial guess
-    fprintf('Initial guess lambda = %.6f\n', lambda_init);
-    [phase_init, ~] = compute_root_phase(lambda_init);
-    fprintf('Phase at initial guess: %.6f\n', phase_init);
-    
-    % Determine which direction leads to which target
-    delta = options.check_radius;
-    [phase_plus, ~] = compute_root_phase(lambda_init + delta);
-    [phase_minus, ~] = compute_root_phase(lambda_init - delta);
-    
-    dist_plus_to_zero = phase_distance(phase_plus, 0);
-    dist_plus_to_pi = phase_distance(phase_plus, pi);
-    dist_minus_to_zero = phase_distance(phase_minus, 0);
-    dist_minus_to_pi = phase_distance(phase_minus, pi);
-    
-    % Determine directions
-    if dist_plus_to_pi < dist_minus_to_pi
-        % Increasing lambda goes toward ±π
-        dir_to_pi = +1;
-        dir_to_zero = -1;
-    else
-        % Decreasing lambda goes toward ±π
-        dir_to_pi = -1;
-        dir_to_zero = +1;
-    end
-    
-    fprintf('Direction toward ±π: %+d\n', dir_to_pi);
-    fprintf('Direction toward 0: %+d\n', dir_to_zero);
-    
-    % Step 2: Find boundary for phase ±π
-    fprintf('\nSearching boundary where phase ≈ ±π...\n');
-    lambda_pi = find_boundary_stepping(lambda_init, dir_to_pi, pi);
-    
-    % Step 3: Find boundary for phase 0
-    fprintf('\nSearching boundary where phase ≈ 0...\n');
-    lambda_zero = find_boundary_stepping(lambda_init, dir_to_zero, 0);
-    
-    % Order them correctly
-    lambda_left = min(lambda_pi, lambda_zero);
-    lambda_right = max(lambda_pi, lambda_zero);
-    lambda_interval = [lambda_left, lambda_right];
-    
-    fprintf('\n=== Results ===\n');
-    fprintf('Interval: [%.10f, %.10f]\n', lambda_left, lambda_right);
-    
-    % Verify
-    [phase_left, ~] = compute_root_phase(lambda_left);
-    [phase_right, ~] = compute_root_phase(lambda_right);
-    fprintf('Verification - Left phase:  %.8f\n', phase_left);
-    fprintf('Verification - Right phase: %.8f\n', phase_right);
-    
-    % Store diagnostics
-    diagnostics.lambda_init = lambda_init;
-    diagnostics.phase_init = phase_init;
-    diagnostics.phase_left = phase_left;
-    diagnostics.phase_right = phase_right;
-    
-    % Nested function: step in direction until phase reaches target
-    function lambda_boundary = find_boundary_stepping(lambda_start, direction, target_phase)
-        % direction: +1 to increase lambda, -1 to decrease lambda
-        % target_phase: 0 or pi
-        
-        lambda_current = lambda_start;
-        step = direction * options.step_size;
-        
-        % Step until we get close to the target
-        max_steps = 10000;
-        for i = 1:max_steps
-            [phase_current, ~] = compute_root_phase(lambda_current);
-            dist_current = phase_distance(phase_current, target_phase);
-            
-            % Check if we're stuck at the boundary
-            if dist_current < options.tol
-                if check_if_stuck(lambda_current, target_phase)
-                    fprintf('  Warning: Phase stuck at boundary at lambda = %.10f\n', lambda_current);
-                    fprintf('  Stepping back to find actual boundary...\n');
-                    % Step back until phase starts changing
-                    lambda_back = lambda_current - step;
-                    for j = 1:100
-                        if ~check_if_stuck(lambda_back, target_phase)
-                            fprintf('  Found non-stuck point at lambda = %.10f\n', lambda_back);
-                            % Bisect between this point and the stuck point
-                            lambda_boundary = bisection_refine(lambda_back, lambda_current, target_phase);
-                            return;
-                        end
-                        lambda_back = lambda_back - step;
-                    end
-                    warning('Could not find non-stuck point');
-                    lambda_boundary = lambda_current;
-                    return;
-                else
-                    fprintf('  Converged at lambda = %.10f (phase = %.8f) after %d steps\n', ...
-                            lambda_current, phase_current, i);
-                    lambda_boundary = lambda_current;
-                    return;
-                end
-            end
-            
-            % Check if next step will overshoot
-            lambda_next = lambda_current + step;
-            [phase_next, ~] = compute_root_phase(lambda_next);
-            dist_next = phase_distance(phase_next, target_phase);
-            
-            if dist_next < dist_current && dist_current < 0.1
-                % Getting close, switch to smaller steps
-                step = step * 0.5;
-            elseif dist_next > dist_current && dist_current < 0.1
-                % Overshot, refine with bisection
-                fprintf('  Switching to bisection refinement...\n');
-                lambda_boundary = bisection_refine(lambda_current, lambda_next, target_phase);
-                return;
-            end
-            
-            lambda_current = lambda_next;
-            
-            if mod(i, 100) == 0
-                fprintf('  Step %d: lambda = %.6f, phase = %.6f, dist = %.6f\n', ...
-                        i, lambda_current, phase_current, dist_current);
-            end
-        end
-        
-        warning('Maximum steps reached without convergence');
-        lambda_boundary = lambda_current;
-    end
-    
-    % Nested function: bisection refinement
-    function lambda_boundary = bisection_refine(lambda_a, lambda_b, target_phase)
-        max_iter = 100;
-        for iter = 1:max_iter
-            lambda_mid = (lambda_a + lambda_b) / 2;
-            [phase_mid, ~] = compute_root_phase(lambda_mid);
-            dist_mid = phase_distance(phase_mid, target_phase);
-            
-            % Check if stuck
-            if dist_mid < options.tol && check_if_stuck(lambda_mid, target_phase)
-                % Mid is stuck, boundary is between a and mid
-                lambda_b = lambda_mid;
-            elseif dist_mid < options.tol || abs(lambda_b - lambda_a) < 1e-12
-                lambda_boundary = lambda_mid;
-                fprintf('  Bisection converged: lambda = %.10f (phase = %.8f)\n', ...
-                        lambda_mid, phase_mid);
-                return;
-            else
-                % Standard bisection logic
-                [phase_a, ~] = compute_root_phase(lambda_a);
-                dist_a = phase_distance(phase_a, target_phase);
-                
-                if dist_mid < dist_a
-                    lambda_a = lambda_mid;
-                else
-                    lambda_b = lambda_mid;
-                end
-            end
-        end
-        
-        lambda_boundary = (lambda_a + lambda_b) / 2;
-    end
+    deriv_sum = (g_plus - 2*g_center + g_minus) / h;
 end
