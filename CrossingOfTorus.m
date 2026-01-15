@@ -2,7 +2,7 @@
     ----------------------------------------------------------------------
     Author(s):    [Erik Orvehed HILTUNEN , Yannick DE BRUIJN]
     Date:         [December 2025]
-    Description:  [Asymptotic Similarity Transform for Toeplitz matrices]
+    Description:  [Gamma curve crossing]
     ----------------------------------------------------------------------
 %}
 
@@ -54,6 +54,7 @@ close all;
 [V, D] = eig(T);
 
 % --- Plot the eigenvectors ---
+%{
     figure;
     hold on;
     grid on;
@@ -80,7 +81,7 @@ close all;
     hold off;
 
  
-%
+%}
 
 % ==== Approximate the open limit ====
     % --- Get initial guess inside the open limit ---
@@ -148,10 +149,11 @@ close all;
     % --- Plot the set Λ(f) ---
     %
 % Suppose these are your points
-A = 0.51      + 0.504i;
-B = -0.60064  + 0.73382i;
+A = 0.6827      + 0.126i;
+B = 0.1211  + 0.7682i;
 C = -0.749946 - 0.661467i;
-D = -1.3324   - 0.0159i;
+%D = -1.3324   - 0.0159i;
+D = -1.2922 + 0.1246i;
 
 % Plot the curve and unit circle
 wraparound_OpenLimit = [openLimit_sorted, openLimit_sorted(1)];
@@ -160,19 +162,19 @@ plot(real(wraparound_OpenLimit), imag(wraparound_OpenLimit), 'k-', 'LineWidth', 
 hold on;
 
 theta = linspace(0, 2*pi, 300);
-plot(cos(theta), sin(theta), 'r-', 'LineWidth', 2);
+plot(cos(theta), sin(theta), 'k--', 'LineWidth', 1);
 
 % ---- Add points A, B, C, D ----
-plot(real(A), imag(A), 'rs', 'MarkerSize', 6, 'LineWidth', 2); % red circle
-plot(real(B), imag(B), 'bs', 'MarkerSize', 6, 'LineWidth', 2); % blue square
-plot(real(C), imag(C), 'gs', 'MarkerSize', 6, 'LineWidth', 2); % green triangle
-plot(real(D), imag(D), 'ms', 'MarkerSize', 6, 'LineWidth', 2); % magenta diamond
+plot(real(A), imag(A), 'rx', 'MarkerSize', 10, 'LineWidth', 2); % red circle
+plot(real(B), imag(B), 'bs', 'MarkerSize', 10, 'LineWidth', 2); % blue square
+plot(real(C), imag(C), 'g^', 'MarkerSize', 10, 'LineWidth', 2); % green triangle
+plot(real(D), imag(D), 'md', 'MarkerSize', 10, 'LineWidth', 2); % magenta diamond
 
 % ---- Add LaTeX labels next to points ----
-text(real(A)+0.02, imag(A), '$A$', 'FontSize', 18, 'Color', 'r', 'Interpreter', 'latex');
-text(real(B)+0.02, imag(B)-0.08, '$B$', 'FontSize', 16, 'Color', 'b', 'Interpreter', 'latex');
-text(real(C)+0.02, imag(C)+0.07, '$C$', 'FontSize', 16, 'Color', 'g', 'Interpreter', 'latex');
-text(real(D)+0.02, imag(D), '$D$', 'FontSize', 16, 'Color', 'm', 'Interpreter', 'latex');
+text(real(A)+0.02, imag(A),      '$A$', 'FontSize', 18, 'Color', 'r', 'Interpreter', 'latex');
+text(real(B)+0.02, imag(B)-0.18, '$B$', 'FontSize', 18, 'Color', 'b', 'Interpreter', 'latex');
+text(real(C)+0.02, imag(C)+0.07, '$C$', 'FontSize', 18, 'Color', 'g', 'Interpreter', 'latex');
+text(real(D)+0.05, imag(D),      '$D$', 'FontSize', 18, 'Color', 'm', 'Interpreter', 'latex');
 
 % Formatting the figure
 set(gcf, 'Position', [100, 100, 300, 300]);
@@ -187,7 +189,7 @@ hold off;
 
     %}
 
-%%
+%
 % ==== Compute Fourier coefficients of f(p(z)) numerically  ====
     % --- Evaluate f(p(z)) on the torus ---
     k_values = -m:m;
@@ -203,138 +205,82 @@ hold off;
     phase_sorted = [-pi; phase_sorted; pi];
     fp_values    = [ fp_values(end); fp_values; fp_values(end)];
 
-    % --- Plot the function f(p(torus))
-    %{
-    figure;
-    plot(phase_sorted, fp_values);
-    hold off;
-    %}
 
-    % --- Compute the Fourier Transform of f(p(z)) ---
-    F_range = DimT; %m+16;
-    FourierFP = fourier_coefficients_spectral(phase_sorted, fp_values, F_range);
+points = [A, B, C, D];      % array of points
+labels = {'A','B','C','D'}; % corresponding labels
 
-    % --- Plot the decay in the Fourier Coefficients ---
-    %
-    N = length(FourierFP);
-x = (1:N) - ceil(N/2);
+% --- Compute phase (angle) of each point ---
+point_phases = angle(points);  % returns values in [-pi, pi]
 
-    figure;
-    semilogy(x, (abs(FourierFP)), 'k','LineWidth', 2.5);
-    hold on;
-    set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-    set(gcf, 'Position', [100, 100, 500, 250]);
-    xlabel('$k$', 'Interpreter', 'latex', 'FontSize', 18);
-    ylabel('$(\widehat{f \circ p})_k$', 'Interpreter', 'latex', 'FontSize', 18); 
-    xlim([-DimT, DimT]);
-    grid on;
-    box on;
-    hold off;
-    %}
+% --- phase_sorted and fp_values are given ---
+% phase_sorted: array of phases where fp_values are evaluated
+% fp_values: corresponding fp values
 
-% ==== Quasi Similarity Transformed Toeplitz matrix ====
-    % --- Toeplitz matrix for deformed path ---
-    T_b = fourier_to_toeplitz(FourierFP, DimT);
-    eigT_b = sort(eig(T_b));
+% --- Initialize array to store fp values corresponding to points ---
+fp_points = zeros(size(points));
 
-    % --- Plot the eigenvalues before and after asymptotic Similarity transform ---
-    %
-    figure;
-    plot(real(eigT), imag(eigT), 'bx', 'MarkerSize', 8, 'LineWidth', 1.5);
-    hold on;
-    plot(real(eigT_b), imag(eigT_b), 'ro', 'MarkerSize', 8, 'LineWidth', 1.5);
-    grid on;
-    box on;
-    xlim([0.96*min(real(eigT)), 1.03*max(real(eigT))])
-    ylim([-0.005, 0.005])
-    xlabel('$\mathrm{Re}(\sigma(\mathbf{T}_N))$', 'Interpreter', 'latex', 'FontSize', 14);
-    ylabel('$\mathrm{Im}(\sigma(\mathbf{T}_N))$', 'Interpreter', 'latex', 'FontSize', 14); 
-    set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-    set(gcf, 'Position', [100, 100, 500, 300]); 
-    axis equal;
-    hold off;
-    %}
+% --- Loop through each point, find closest phase in phase_sorted ---
+for k = 1:length(points)
+    [~, idx] = min(abs(phase_sorted - point_phases(k))); % closest index
+    fp_points(k) = fp_values(idx);                       % pick fp value
+end
 
-% ==== Hirschman density of states ====
-    
-    lambda_interval = linspace(lambda_interval(1), lambda_interval(2), 500);
-    deriv_sums = zeros(size(lambda_interval));
-    
-    for i = 1:length(lambda_interval)
-        deriv_sums(i) = 1/(2*pi) * 1/g(lambda_interval(i), a) * compute_g_derivative_sum(lambda_interval(i), a);
-        deriv_sums(i) = min(20, deriv_sums(i));
-    end
+% --- Optional: display results ---
+for k = 1:length(points)
+    fprintf('%s: phase = %.3f rad, closest fp = %.3f\n', labels{k}, point_phases(k), fp_points(k));
+end
 
-    % --- Plot the DOS against the empirical measure ---
-    %{
-    figure;
-    histogram(eigT_b, floor(DimT/2), 'Normalization', 'pdf');
-    hold on;
-    plot(lambda_interval, deriv_sums, 'LineWidth', 2);
-    set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-    set(gcf, 'Position', [100, 100, 600, 250]); 
-    xlabel('Eigenvalue', 'Interpreter', 'latex', 'FontSize', 14);
-    ylabel('Density of States', 'Interpreter', 'latex', 'FontSize', 14); 
-    box on;
-    hold off;
-    %}
+% Eigen-decomposition
+[V, D] = eig(T);
+eigvals = diag(D);      % eigenvalues
+Neig = length(eigvals);
+
+% Storage for matched eigenvectors
+eigvecs_points = zeros(size(V,1), length(fp_points));
+eigval_matches = zeros(size(fp_points));
+
+for k = 1:length(fp_points)
+    [~, idx] = min(abs(eigvals - fp_points(k)));  % closest eigenvalue
+    eigvecs_points(:,k) = V(:,idx);               % eigenvector
+    eigval_matches(k) = eigvals(idx);             % store eigenvalue
+end
+
+colors = {'r','b','g','m'};
+labels = {'A','B','C','D'};
+
+markers = {'x','s','^','d'};   % same order as A,B,C,D
+
+figure;
+hold on;
+
+for k = 1:length(fp_points)
+    v = eigvecs_points(:,k);
+
+    % Normalize for visual comparison
+    v = v / norm(v);
+
+    semilogy(1:length(v), abs(v) + eps, ...
+        markers{k}, ...                 % <-- marker style
+        'Color', colors{k}, ...
+        'LineWidth', 1.5, ...
+        'MarkerSize', 6);
+end
+
+set(gca, 'TickLabelInterpreter', 'latex', ...
+         'FontSize', 18, ...
+         'YScale', 'log');
+
+xlabel('Index', 'Interpreter', 'latex', 'FontSize', 18);
+ylabel('$|\mathbf{v}_i|$', 'Interpreter', 'latex', 'FontSize', 18);
+
+set(gcf, 'Position', [100, 100, 500, 300]);
+grid on;
+box on;
+hold off;
+
 
 
 %% --- Defining functions ---
-
-
-function ck = fourier_coefficients_spectral(phase, fp_values, K)
-    
-    N = length(phase);
-    M = max(2*K+1, 2*N); 
-    theta_uniform = (0:M-1)' * 2*pi/M;
-    
-    % --- Get uniform sampling ---
-    fp_uniform = trig_barycentric_interp(phase, fp_values, theta_uniform);
-    
-    % --- Use standard (uniform) FFT ---
-    fft_result = fft(fp_uniform) / M;
-    
-    % --- Extract coefficients ---
-    ck = zeros(2*K+1, 1);
-    ck(K+1) = fft_result(1);
-    ck(K+2:end) = fft_result(2:K+1);
-    ck(1:K) = fft_result(end-K+1:end);
-end
-
-
-function f_interp = trig_barycentric_interp(x, f, x_target)
-
-    N = length(x);
-
-    % Precompute barycentric weights (independent of x_target)
-    w = (-1).^(0:N-1)';   % column vector
-
-    % Build matrix of differences: M×N
-    % each row j is x_target(j) - x(:)'
-    D = x_target(:) - x(:).';
-
-    % Detect exact hits (machine precision)
-    hit = abs(D) < 1e-14;
-
-    % Avoid division by zero in denominator
-    D(hit) = Inf;
-
-    % Barycentric kernel: w / sin((x_target - x)/2)
-    K = w.' ./ sin(D/2);     % w.' ensures broadcasting over rows
-
-    % Compute numerator and denominator
-    num = K * f;             % M×N times N×1 → M×1
-    den = sum(K, 2);         % sum rows → M×1
-
-    f_interp = num ./ den;
-
-    % Insert exact-match values
-    if any(hit, "all")
-        [j_idx, x_idx] = find(hit);
-        f_interp(j_idx) = f(x_idx);
-    end
-end
 
 
 function T = fourier_to_toeplitz(a, dimT)
@@ -481,50 +427,3 @@ function merged = merge_close_points(openLimit, tol)
     end
 end
 
-
-function g_val = g(lambda, a)
-    % Compute g(lambda) = |a(end)| * prod_{k=m+1}^{2m} |z_k(lambda)|
-    %
-    % Inputs:
-    %   lambda - complex value
-    %   a - coefficient array (must have odd length 2m+1)
-    
-    m = (length(a)-1)/2;
-    
-    % Build polynomial template
-    coeff_Q = zeros(1, 2*m+1);
-    for j = -m:m
-        coeff_Q(m-j+1) = a(j+m+1);
-    end
-    
-    % Modify polynomial: Q(z) - lambda
-    c = coeff_Q;
-    c(m+1) = c(m+1) - lambda;
-    
-    % Find roots and sort by magnitude
-    r = roots(c);
-    r_abs = abs(r);
-    [~, idx] = sort(r_abs);
-    r_sorted = r(idx);
-    
-    % Compute g(lambda) = |a(end)| * product of larger m roots
-    larger_roots = r_sorted(m+1:2*m);
-    g_val = abs(a(end)) * prod(abs(larger_roots));
-end
-
-
-function deriv_sum = compute_g_derivative_sum(lambda_real, a, h)
-    % Compute ∂g/∂n₁ + ∂g/∂n₂ for Hirschman DOS
-    
-    if nargin < 3
-        h = 1e-5;
-    end
-    
-    lambda_complex = lambda_real + 0i;
-    
-    g_plus = g(lambda_complex + 1i*h, a);
-    g_center = g(lambda_complex, a);
-    g_minus = g(lambda_complex - 1i*h, a);
-    
-    deriv_sum = (g_plus - 2*g_center + g_minus) / h;
-end
