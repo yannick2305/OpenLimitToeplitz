@@ -45,9 +45,9 @@ In this figure we illustrate that a Homotopy between the torus and the Generalis
 
 ## II.5 Generalised Brillouin and non-Hermitian Hamiltonian
 
-We verify numerically that the open limit produces real-valued spectra providet that $\Lambda(f_m)$ is traced out by a polar curve.
+We Illustrate how the Genralised Brillouin zone may be used to predict the localisation strength in non-Hermitian Hamiltonians.
 
-**Set $\Lambda(f)$** (`OpenLimit.m`)
+**Set $\Lambda(f)$** (`GBZ_Hamiltonian.m`)
 
 <p align="center"> 
   <img src="Figures/UnitCircleCrossing.png" alt="GBZ" width="700"/> 
