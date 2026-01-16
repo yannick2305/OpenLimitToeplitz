@@ -43,3 +43,13 @@ In this figure we illustrate that a Homotopy between the torus and the Generalis
 
 <p align="center"> <img src="Figures/homotopyCircle.gif" alt="Scaled unit circle" width="1200"/> <br> <em>Figure 1: A simple scaling of the unit torus is not enough to uniformly collapse the symbol function. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
 
+## II.5 Generalised Brillouin and non-Hermitian Hamiltonian
+
+We verify numerically that the open limit produces real-valued spectra providet that $\Lambda(f_m)$ is traced out by a polar curve.
+
+**Set $\Lambda(f)$** (`OpenLimit.m`)
+
+<p align="center"> 
+  <img src="Figures/UnitCircleCrossing.png" alt="GBZ" width="700"/> 
+</p>
+
