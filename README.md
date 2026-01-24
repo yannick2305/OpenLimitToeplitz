@@ -47,6 +47,7 @@ In this figure we illustrate that a Homotopy between the torus and the Generalis
 
 In this figure we illustrate that it is a numerically challenging task to compute the eigenvalues of large non-Hermitianmatrices. Empirically from a matrix size of 100 and onwards, the poluution becomes noticable, which is why we propose to effectively precondition the non-Hermitian matrices, by deforming the symbol path.
 
+**Spectral Pollution** (`PollutedEval.m`)
 <p align="center"> 
   <img src="Figures/Pollution.png" alt="Spectral Pollution" width="700"/> 
 </p>
