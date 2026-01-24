@@ -43,6 +43,15 @@ In this figure we illustrate that a Homotopy between the torus and the Generalis
 
 <p align="center"> <img src="Figures/homotopyCircle.gif" alt="Scaled unit circle" width="1200"/> <br> <em>Figure 1: A simple scaling of the unit torus is not enough to uniformly collapse the symbol function. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
 
+## II.4 Spectral Pollution
+
+In this figure we illustrate that it is a numerically challenging task to compute the eigenvalues of large non-Hermitianmatrices. Empirically from a matrix size of 100 and onwards, the poluution becomes noticable, which is why we propose to effectively precondition the non-Hermitian matrices, by deforming the symbol path.
+
+<p align="center"> 
+  <img src="Figures/Pollution.png" alt="Spectral Pollution" width="700"/> 
+</p>
+
+
 ## II.5 Generalised Brillouin and non-Hermitian Hamiltonian
 
 We Illustrate how the Genralised Brillouin zone may be used to predict the localisation strength in non-Hermitian Hamiltonians.
