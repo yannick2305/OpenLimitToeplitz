@@ -1,8 +1,8 @@
 %{
     ----------------------------------------------------------------------
     Author(s):    [Erik Orvehed HILTUNEN , Yannick DE BRUIJN]
-    Date:         [December 2025]
-    Description:  [Asymptotic Similarity Transform for Toeplitz matrices]
+    Date:         [January 2026]
+    Description:  [Spectral Convergence]
     ----------------------------------------------------------------------
 %}
 
@@ -10,58 +10,36 @@ clc
 clear;
 close all;
 
-itera = 70;
+% --- Parameters ---
+    itera = 70; % Maximum matrix size
+    m = 7;      % Truncation size for a_k
+    p = 3.5;    % Decay rate upwards
+    q = 4.8;    % Decay rate downwards
+    fs = 18;    % Fontsize for annotation
 
-ero = zeros(itera,1);
+    l1  = zeros(itera,1);
 
-W1 = zeros(itera,1);
-
-FourCo= zeros(itera,1);
-
-
-for DimT = 2:itera
-% ==== Parameters ====
-    m = 7;              % Truncation size for a_k
-    p = 3.5;            % Decay rate upwards
-    q = 4.8;            % Decay rate downwards
-    %DimT = 70;         % Dimension of finite Toeplitz matrix to simulate open limit
-    num_lambda =  DimT * 2;   % Number of plotting points (50-300)
-    fs = 18;            % Fontsize for annotation
-
-    %DimT = 50;
-
-    
-
-% ==== Generate m-bsned Dummy Toeplitz Matrix ====
+% ==== Approximate the open limit ====
+    DimT = 20;
     col = zeros(m,1);
     row = zeros(1,m+1);
-    
-    % --- Add noise to the coeffiients ---
-    ai = 1;
-    bi = 1;
 
     col(1) = 1; 
     row(1) = 1;
 
     % --- Populate above and below diagonals ---
     for k = 1:m
-        r = ai + (bi-ai)*rand;
-        col(k) = r / ((k+1)^q);
-        r = ai + (bi-ai)*rand;
-        row(k+1) = r / ((k+1)^p);
+        col(k)   = 1 / ((k+1)^q);
+        row(k+1) = 1 / ((k+1)^p);
     end
    
     % --- Coefficients of the symbol function ---
     a = [ col(end:-1:1)', row];
-
-    %a = [1 ,0, 1];
        
     % --- Generate finite Toeplitz matrix ---
-    T = fourier_to_toeplitz(a, DimT);
+    T    = fourier_to_toeplitz(a, DimT);
     eigT = sort(eig(T));
 
-
-% ==== Approximate the open limit ====
     % --- Get initial guess inside the open limit ---
     lambda_start = ( min(real(eigT)) + max(real(eigT)) ) / 2;
 
@@ -69,17 +47,35 @@ for DimT = 2:itera
      [lambda_interval(1), lambda_interval(2)]  = adaptive_equal_mod_interval(a, lambda_start);
 
 
+for DimT = 1:itera
+
+% ==== Set the number of sampling points in FFT ====
+    num_lambda =  DimT * 2;  
+
+% ==== Generate m-banded Dummy Toeplitz Matrix ====
+    col = zeros(m,1);
+    row = zeros(1,m+1);
+
+    col(1) = 1; 
+    row(1) = 1;
+
+    % --- Populate above and below diagonals ---
+    for k = 1:m
+        col(k)   = 1 / ((k+1)^q);
+        row(k+1) = 1 / ((k+1)^p);
+    end
+   
+    % --- Coefficients of the symbol function ---
+    a = [ col(end:-1:1)', row];
+       
+    % --- Generate finite Toeplitz matrix ---
+    T    = fourier_to_toeplitz(a, DimT);
+    eigT = sort(eig(T));
+
 % ==== Approximate conjugate root set Λ(f) ====
     % --- Get sampling which is close to the DOS (Uniform spacing on Λ(f) ---
     t = linspace(0, 1, num_lambda);
     lambda_vals = lambda_interval(1) + (lambda_interval(2) - lambda_interval(1)) * (0.5 * (1 - cos(pi*t)));
-    
-    % --- Plot the Density of states of the sampling ---
-    %{
-    histogram(lambda_vals, floor(num_lambda/4), 'Normalization', 'pdf');
-    xlabel('Eigenvalue');
-    ylabel('Density of States');
-    %}
 
     % --- Preallocate for all polynomial coefficients [P(z) = Q(z) - lambda*z^m] ---
     P_coeffs_matrix = repmat(a(:), 1, num_lambda);
@@ -123,68 +119,13 @@ for DimT = 2:itera
     openLimit_sorted = merge_close_points(openLimit_sorted, 1e-4);
     phase_sorted = angle(openLimit_sorted(:));
 
-    FourierP = fourier_coefficients_spectral(phase_sorted, openLimit_sorted.', 10);
-
-    theta = phase_sorted(:);       % ensure column vector
+    theta  = phase_sorted(:);      % ensure column vector
     p_vals = openLimit_sorted(:);  % ensure column vector
     N = length(theta);
     
     % Sort by theta (optional, helps trapezoid)
     [theta_sorted, idx] = sort(theta);
     p_sorted = p_vals(idx);
-
-%{
-% Fourier modes
-M = 10;
-n = -M:M;
-c = zeros(length(n),1);
-
-% Compute approximate Fourier coefficients using trapezoidal rule
-for j = 1:length(n)
-    % differences between consecutive theta for integration weight
-    dtheta = diff([theta_sorted; theta_sorted(1)+2*pi]); 
-    c(j) = sum( p_sorted .* exp(-1i*n(j)*theta_sorted) .* dtheta ) / (2*pi);
-end
-
-
-k = M;
-m = -k:k;
-
-E = exp(-1i * theta_sorted(:) * m);   % size N × (2k+1)
-ct = (p_sorted(:).' * E).' / length(p_sorted);
-
-
-    figure;
-    semilogy(1:length(c), (abs(c)));
-    hold on;
-    semilogy(1:length(ct), (abs(ct)));
-    hold off;
-
-%%
-%}
-
-    % --- Plot the set Λ(f) ---
-    %{
-        wraparound_OpenLimit = [openLimit_sorted, openLimit_sorted(1)];
-        figure;
-        plot(real(wraparound_OpenLimit), imag(wraparound_OpenLimit), 'k-', 'LineWidth', 2.5)
-        hold on;
-        % ---- unit circle ----
-        theta = linspace(0, 2*pi, 300);
-        plot(cos(theta), sin(theta), 'r-', 'LineWidth', 2);
-        plot(real(openLimit_sorted), imag(openLimit_sorted), 'bx', 'LineWidth', 2.5)
-        %legend({'$\Lambda(f)$', 'Unit torus', ''}, 'Interpreter', 'latex', 'FontSize', 18);
-
-        set(gcf, 'Position', [100, 100, 300, 300]);
-        set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-        xlabel('$\mathrm{Re}$', 'Interpreter', 'latex', 'FontSize', 18);
-        ylabel('$\mathrm{Im}$', 'Interpreter', 'latex', 'FontSize', 18); 
-        grid on;
-        axis equal;
-        box on;
-        hold off;
-    %}
-
 
 % ==== Compute Fourier coefficients of f(p(z)) numerically  ====
     % --- Evaluate f(p(z)) on the torus ---
@@ -201,24 +142,9 @@ ct = (p_sorted(:).' * E).' / length(p_sorted);
     phase_sorted = [phase_sorted; pi];
     fp_values    = [fp_values; fp_values(1)];
 
-    % --- Plot the function f(p(torus))
-    %{
-    figure;
-    plot(phase_sorted, fp_values);
-    hold off;
-    %}
-
     % --- Compute the Fourier Transform of f(p(z)) ---
     F_range = m+20;
     FourierFP = fourier_coefficients_spectral(phase_sorted, fp_values, F_range);
-
-    % --- Plot the decay in the Fourier Coefficients ---
-    %{
-    figure;
-    semilogy(1:length(FourierFP), (abs(FourierFP)));
-    hold off;
-    %}
-
     
 % ==== Quasi Similarity Transformed Toeplitz matrix ====
     % --- Toeplitz matrix for deformed path ---
@@ -228,57 +154,31 @@ ct = (p_sorted(:).' * E).' / length(p_sorted);
     T_b = fourier_to_toeplitz(ba, DimT);
     eigT_b = sort(eig(T_b));
 
-
-    ero(DimT) =  hausdorffDistance(eigT, eigT_b);
-
-    FourCo(num_lambda) = ba(1);
-
-    % --- Wasserstein distance ---
+    % --- Compute l1 distance of the spectrum ---
     lam  = sort(real(eigT(:)));
     lamb = sort(real(eigT_b(:)));
-
-    W1(DimT) = sum(abs(lam - lamb));
-
-% ==== Hirschman density of states ====
-    
-    lambda_interval = linspace(lambda_interval(1), lambda_interval(2), 500);
-    deriv_sums = zeros(size(lambda_interval));
-    
-    for i = 1:length(lambda_interval)
-        deriv_sums(i) = 1/(2*pi) * 1/g(lambda_interval(i), a) * compute_g_derivative_sum(lambda_interval(i), a);
-        deriv_sums(i) = min(20, deriv_sums(i));
-    end
-
+    l1(DimT) = sum(abs(lam - lamb));
 
 end
 
+% ==== Plot the l1 distance ====
+    % --- Generate algebraic trendline ---
+    nvals = 1:itera;
+    rate = 1;
+    trend = 2.5*l1(2)./nvals.^rate;
 
-% --- Plot the Hausdorff distance ---
-
-close all;
-nvals = 1:itera;
-rate = 1;
-trend = 2.5*W1(2)./nvals.^rate;
-% Plot
-
-W1(1) = W1(3);
-%W1(2) = W1(3);
-%W1(3) = W1(4);
-
+    % --- Plot the result ---
     figure;
-    %loglog(1:itera, ero, 'k-', 'LineWidth', 1.5);
-    loglog(1:itera, W1+eps, 'k', 'LineWidth', 1.5);
-    %loglog(1:itera, abs(FourCo-FourCo(end)), 'g-', 'LineWidth', 1.5);
+    loglog(1:itera, l1+eps, 'k', 'LineWidth', 1.5);
     hold on;
     loglog(1:itera, trend, 'r--', 'LineWidth', 1.5);
-    %loglog(kt, ero_fit, 'r--', 'LineWidth', 2);  % trendline
     xlabel('Matrix size $N$', 'Interpreter', 'latex', 'FontSize', 14);
     %ylabel('$\varepsilon_N$', 'Interpreter', 'latex', 'FontSize', 14); 
     set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
     set(gcf, 'Position', [100, 100, 500, 250]); 
     legend('$d_{\sigma}\big(\mathbf{T}_{N}(f), \mathbf{T}_{N}(f\circ p)\big)$', ...
        '$\mathcal{O}(N^{-1})$', ...
-       'Location', 'Southwest', ...
+       'Location', 'Northeast', ...
        'Interpreter', 'latex', ...
        'FontSize', 18);
      %ylim([1e-7, 1e-6]);
@@ -287,53 +187,8 @@ W1(1) = W1(3);
     grid on;
     hold off;
 
-    
-%%
-
-% --- Plot Wasserstein Distance ---
-
-
-    % --- Plot the eigenvalues before and after asymptotic Similarity transform ---
-    %
-    figure;
-    plot(real(eigT), imag(eigT), 'bx', 'MarkerSize', 8, 'LineWidth', 1.5);
-    hold on;
-    plot(real(eigT_b), imag(eigT_b), 'ro', 'MarkerSize', 8, 'LineWidth', 1.5);
-    grid on;
-    box on;
-    xlim([0.96*min(real(eigT)), 1.03*max(real(eigT))])
-    ylim([-0.005, 0.005])
-    legend({'$\sigma(\mathbf{T}_n(f))$', '$\sigma(\mathbf{T}_n(f\circ p))$'}, 'Interpreter', 'latex', 'FontSize', 18);
-    xlabel('$\mathrm{Re}$', 'Interpreter', 'latex', 'FontSize', 14);
-    ylabel('$\mathrm{Im}$', 'Interpreter', 'latex', 'FontSize', 14); 
-    set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-    set(gcf, 'Position', [100, 100, 500, 300]); 
-    axis equal;
-    hold off;
-    %}
-
-
-        % --- Plot the DOS against the empirical measure ---
-    %
-    figure;
-    histogram(eigT_b, floor(DimT/2), 'Normalization', 'pdf');
-    hold on;
-    histogram(eigT, floor(DimT/2), 'FaceColor', 'g', 'Normalization', 'pdf');
-    %plot(lambda_interval, deriv_sums, 'LineWidth', 2);
-    set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 18);
-    set(gcf, 'Position', [100, 100, 600, 250]); 
-    xlabel('Eigenvalue', 'Interpreter', 'latex', 'FontSize', 14);
-    ylabel('Density of States', 'Interpreter', 'latex', 'FontSize', 14); 
-    box on;
-    hold off;
-    %}
-
-
-
-
 
 %% --- Defining functions ---
-
 
 function ck = fourier_coefficients_spectral(phase, fp_values, K)
     
@@ -533,74 +388,3 @@ function merged = merge_close_points(openLimit, tol)
     end
 end
 
-
-function g_val = g(lambda, a)
-    % Compute g(lambda) = |a(end)| * prod_{k=m+1}^{2m} |z_k(lambda)|
-    %
-    % Inputs:
-    %   lambda - complex value
-    %   a - coefficient array (must have odd length 2m+1)
-    
-    m = (length(a)-1)/2;
-    
-    % Build polynomial template
-    coeff_Q = zeros(1, 2*m+1);
-    for j = -m:m
-        coeff_Q(m-j+1) = a(j+m+1);
-    end
-    
-    % Modify polynomial: Q(z) - lambda
-    c = coeff_Q;
-    c(m+1) = c(m+1) - lambda;
-    
-    % Find roots and sort by magnitude
-    r = roots(c);
-    r_abs = abs(r);
-    [~, idx] = sort(r_abs);
-    r_sorted = r(idx);
-    
-    % Compute g(lambda) = |a(end)| * product of larger m roots
-    larger_roots = r_sorted(m+1:2*m);
-    g_val = abs(a(end)) * prod(abs(larger_roots));
-end
-
-
-function deriv_sum = compute_g_derivative_sum(lambda_real, a, h)
-    % Compute ∂g/∂n₁ + ∂g/∂n₂ for Hirschman DOS
-    
-    if nargin < 3
-        h = 1e-5;
-    end
-    
-    lambda_complex = lambda_real + 0i;
-    
-    g_plus = g(lambda_complex + 1i*h, a);
-    g_center = g(lambda_complex, a);
-    g_minus = g(lambda_complex - 1i*h, a);
-    
-    deriv_sum = (g_plus - 2*g_center + g_minus) / h;
-end
-
-
-function dH = hausdorffDistance(A, B)
-%HAUSDORFFDISTANCE Compute Hausdorff distance between two sets of complex numbers
-%
-%   dH = hausdorffDistance(A, B)
-%
-%   A, B : vectors of real or complex numbers
-%   dH   : Hausdorff distance
-
-    % Ensure column vectors
-    A = A(:);
-    B = B(:);
-
-    % Pairwise distances |a - b|
-    D = abs(A - B.');
-
-    % Directed distances
-    dAB = max(min(D, [], 2));  % from A to B
-    dBA = max(min(D, [], 1));  % from B to A
-
-    % Hausdorff distance
-    dH = max(dAB, dBA);
-end
