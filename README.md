@@ -10,10 +10,10 @@
 
 **Abstract:** We provide the complete computational framework supporting the theoretical results in [1].
 
-  <sub>Last updated: December 14, 2025</sub>
+  <sub>Last updated: January 26, 2026</sub>
 
   
-## II.4 Spectrum of Open Limit
+## I.1 Spectrum of Open Limit
 
 This animation illustrates how the open spectrum comprises the intersection of spectra of Toeplitz operators evaluated on the *r*-scaled torus:
 
@@ -23,19 +23,19 @@ $$\lim_{n\to\infty} \sigma\left(\mathbf{T}_n(f_m)\right) = \bigcap_{r>0} \sigma\
 
 <p align="center"> <img src="Figures/Open_limit_real.gif" alt="Open spectrum collapse (real)" width="700"/> <br> <em>Figure 1: Open limitis real valued. Computation performed for m=3, p = 4.5 and q = 6.5.</em> </p> <p align="center"> <img src="Figures/Open_limit_complex.gif" alt="Open spectrum collapse (complex)" width="700"/> <br> <em>Figure 2: Open limit contains complex values. Computation performed for m = 6, p = 1 and q = 6</em> </p>
 
-## II.5 Reality of the Open Limit
+## I.2 Reality of the Open Limit
 
 We verify numerically that the open limit produces real-valued spectra providet that $\Lambda(f_m)$ is traced out by a polar curve.
 
 **Set $\Lambda(f)$** (`OpenLimit.m`)
 
-<p align="center"> Lambda
+<p align="center"> 
   <img src="Figures/LambdaOfF.png" alt="Real-valued open limit" width="700"/> 
 </p>
 
 
 
-## II.1 Homotopic transformation of the unit circle
+## I.3 Homotopic transformation of the unit circle
 
 In this figure we illustrate that a Homotopy between the torus and the Generalised Brillouin zone uniformly collapses the winding region on the real axis.
 
@@ -44,7 +44,7 @@ In this figure we illustrate that a Homotopy between the torus and the Generalis
 
 <p align="center"> <img src="Figures/homotopyCircle.gif" alt="Scaled unit circle" width="1200"/> <br> <em>Figure 1: A simple scaling of the unit torus is not enough to uniformly collapse the symbol function. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
 
-## II.4 Spectral Pollution
+## I.4 Spectral Pollution
 
 In this figure we illustrate that it is a numerically challenging task to compute the eigenvalues of large non-Hermitianmatrices. Empirically from a matrix size of 100 and onwards, the poluution becomes noticable, which is why we propose to effectively precondition the non-Hermitian matrices, by deforming the symbol path.
 
@@ -53,8 +53,10 @@ In this figure we illustrate that it is a numerically challenging task to comput
   <img src="Figures/Pollution.png" alt="Spectral Pollution" width="700"/> 
 </p>
 
+## I.5 Density of states and spectral convergence
 
-## II.5 Generalised Brillouin and non-Hermitian Hamiltonian
+
+## II.1 Generalised Brillouin and non-Hermitian Hamiltonian
 
 We Illustrate how the Genralised Brillouin zone may be used to predict the localisation strength in non-Hermitian Hamiltonians.
 
@@ -63,4 +65,11 @@ We Illustrate how the Genralised Brillouin zone may be used to predict the local
 <p align="center"> 
   <img src="Figures/UnitCircleCrossing.png" alt="GBZ" width="700"/> 
 </p>
+
+
+## III. Citation
+
+If you use this code in your research, please cite:
+
+> De Bruijn, Y. and Hiltunen, E.O., *Spectra and pseudospectra of non-Hermitian Toeplitz operators: Eigenvector decay transitions in banded and dense matrices* (2025)
 
