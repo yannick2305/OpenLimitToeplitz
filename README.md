@@ -53,6 +53,10 @@ In this figure we illustrate that it is a numerically challenging task to comput
 
 ## I.5 Density of states and spectral convergence
 
+The pontwise spectral convergence is captured by the $l^2$ distance of the eigenvalues
+
+$$d_\sigma\big(\mathbf{T}_n(f), \mathbf{T}_n(f\circ p)\big) := \sum_{k =1 }^n |\lambda_k-\tau_k| $$
+
 **Pointwise spectral convergence** (`ConvergenceSpectrum.m`)
 <p align="center"> 
   <img src="Figures/SpectralConv.png" alt="Spectral Convergence" width="700"/> 
