@@ -33,8 +33,6 @@ We verify numerically that the open limit produces real-valued spectra providet 
   <img src="Figures/LambdaOfF.png" alt="Real-valued open limit" width="700"/> 
 </p>
 
-
-
 ## I.3 Homotopic transformation of the unit circle
 
 In this figure we illustrate that a Homotopy between the torus and the Generalised Brillouin zone uniformly collapses the winding region on the real axis.
@@ -55,9 +53,9 @@ In this figure we illustrate that it is a numerically challenging task to comput
 
 ## I.5 Density of states and spectral convergence
 
-**Pointwise spectral convergence** (`ConvergenceSpectrum.m.m`)
+**Pointwise spectral convergence** (`ConvergenceSpectrum.m`)
 <p align="center"> 
-  <img src="Figures/SpectralConv.png.png" alt="Spectral Convergence" width="700"/> 
+  <img src="Figures/SpectralConv.png" alt="Spectral Convergence" width="700"/> 
 </p>
 
 ## II.1 Generalised Brillouin and non-Hermitian Hamiltonian
