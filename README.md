@@ -55,6 +55,10 @@ In this figure we illustrate that it is a numerically challenging task to comput
 
 ## I.5 Density of states and spectral convergence
 
+**Pointwise spectral convergence** (`ConvergenceSpectrum.m.m`)
+<p align="center"> 
+  <img src="Figures/SpectralConv.png.png" alt="Spectral Convergence" width="700"/> 
+</p>
 
 ## II.1 Generalised Brillouin and non-Hermitian Hamiltonian
 
