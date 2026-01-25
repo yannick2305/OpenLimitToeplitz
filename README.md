@@ -29,7 +29,7 @@ We verify numerically that the open limit produces real-valued spectra providet 
 
 **Set $\Lambda(f)$** (`OpenLimit.m`)
 
-<p align="center"> 
+<p align="center"> Lambda
   <img src="Figures/LambdaOfF.png" alt="Real-valued open limit" width="700"/> 
 </p>
 
