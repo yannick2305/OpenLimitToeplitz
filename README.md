@@ -77,5 +77,6 @@ We Illustrate how the Genralised Brillouin zone may be used to predict the local
 
 If you use this code in your research, please cite:
 
-> De Bruijn, Y. and Hiltunen, E.O., *Spectra and pseudospectra of non-Hermitian Toeplitz operators: Eigenvector decay transitions in banded and dense matrices* (2025)
+> De Bruijn, Y. and Hiltunen, E.O., *Real Asymptotic spectra for a class of non-Hermitian m-banded Toeplitz operators and the Mathematical Foundation for the Generalised Brillouin zone.* (2025)
+
 
