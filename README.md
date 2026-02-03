@@ -42,7 +42,16 @@ In this figure we illustrate that for a class of Toeplitz matrices, a Homotopy b
 
 <p align="center"> <img src="Figures/homotopyCircle.gif" alt="Scaled unit circle" width="1200"/> <br> <em>Figure 1: A simple scaling of the unit torus is not enough to uniformly collapse the symbol function. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
 
-## I.4 Spectral Pollution
+
+## I.4 Density of states under deformed dymbol path
+
+We have demonstrated that for a class of non-Hermitian Toeplitz matrices $\mathbf{T}_n(f)$ , the Density of states is equal to the denensitz of states of the ermitian matrix $\mathbf{T}_n(f \circ p)$.
+
+<p align="center"> 
+  <img src="Figures/DoSFigure.png" alt="DoS" width="700"/> 
+</p>
+
+## I.5 Spectral Pollution
 
 In this figure we illustrate that it is a numerically challenging task to compute the eigenvalues of large non-Hermitianmatrices. Empirically from a matrix size of 100 and onwards, the poluution becomes noticable, which is why we propose to effectively precondition the non-Hermitian matrices, by deforming the symbol path.
 
@@ -51,7 +60,7 @@ In this figure we illustrate that it is a numerically challenging task to comput
   <img src="Figures/Pollution.png" alt="Spectral Pollution" width="700"/> 
 </p>
 
-## I.5 Density of states and spectral convergence
+## I.6 Density of states and spectral convergence
 
 The pontwise spectral convergence is captured by the $l^2$ distance of the eigenvalues
 
