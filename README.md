@@ -45,8 +45,9 @@ In this figure we illustrate that for a class of Toeplitz matrices, a Homotopy b
 
 ## I.4 Density of states under deformed dymbol path
 
-We have demonstrated that for a class of non-Hermitian Toeplitz matrices $\mathbf{T}_n(f)$ , the Density of states is equal to the denensitz of states of the ermitian matrix $\mathbf{T}_n(f \circ p)$.
+We have demonstrated that for a class of non-Hermitian Toeplitz matrices $\mathbf{T}_n(f)$, the Density of states is equal to the denensitz of states of the ermitian matrix $\mathbf{T}_n(f \circ p)$. In the following numerical experiment, we will demonstrate that the empirical measure of $\mathbf{T}_n(f \circ p)$ converwges in distribution to the Density of states of $\mathbf{T}_n(f)$. 
 
+**Sow the convergence of the empirical measure to the DoS** (`QuasiSimilarity.m`)
 <p align="center"> 
   <img src="Figures/DoSFigure.png" alt="DoS" width="700"/> 
 </p>
