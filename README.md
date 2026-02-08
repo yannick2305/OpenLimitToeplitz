@@ -87,6 +87,6 @@ We Illustrate how the Genralised Brillouin zone may be used to predict the local
 
 If you use this code in your research, please cite:
 
-> De Bruijn, Y. and Hiltunen, E.O., *Real Asymptotic spectra for a class of non-Hermitian m-banded Toeplitz operators and the Mathematical Foundation for the Generalised Brillouin zone.* (2025)
+> De Bruijn, Y. and Hiltunen, E.O., *Mathematical Foundation for the Generalised Brillouin zone of m-banded Toeplitz operators.* (2026)
 
 
