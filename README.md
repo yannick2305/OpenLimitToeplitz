@@ -26,7 +26,7 @@ $$\Lambda(f) = \lim_{n\to\infty} \sigma\left(\mathbf{T}_n(f_m)\right) = \bigcap_
 
 ## I.2 Reality of the Open Limit
 
-We verify numerically that the open limit produces real-valued spectra provided that $\Lambda(f_m)$ is traced out by a polar curve.
+We verify numerically that the open limit produces real-valued spectra provided that $\mathbf{Z}(f_m)$ is traced out by a polar curve.
 
 **Set $\Lambda(f)$** (`OpenLimit.m`)
 
@@ -78,9 +78,9 @@ $$d_\sigma\big(\mathbf{T}_n(f), \mathbf{T}_n(f\circ p)\big) := \sum_{k = 1}^n |\
 
 ## II.1 Generalised Brillouin and non-Hermitian Hamiltonian
 
-We illustrate how the Generalised Brillouin zone may be used to predict the localisation strength in non-Hermitian Hamiltonians.
+We illustrate how the Generalised Brillouin zone, $\mathbf{Z}(f)$ may be used to predict the localisation strength in non-Hermitian Hamiltonians.
 
-**Set $\Lambda(f)$** (`GBZ_Hamiltonian.m`)
+**Set $\mathbf{Z}(f)$** (`GBZ_Hamiltonian.m`)
 
 <p align="center"> 
   <img src="Figures/UnitCircleCrossing.png" alt="GBZ" width="700"/> 
