@@ -10,9 +10,8 @@
 
 **Abstract:** We provide the complete computational framework supporting the theoretical results in [1].
 
-  <sub>Last updated: February 09, 2026</sub>
+<sub>Last updated: February 09, 2026</sub>
 
-  
 ## I.1 Spectrum of Open Limit
 
 This animation illustrates that the open limit is given by the intersection of spectra of Toeplitz operators evaluated on the *r*-scaled torus:
@@ -21,11 +20,13 @@ $$\Lambda(f) = \lim_{n\to\infty} \sigma\left(\mathbf{T}_n(f_m)\right) = \bigcap_
 
 **Collapsed symbol Movie** (`CollapseSymbolMovie.m`)
 
-<p align="center"> <img src="Figures/Open_limit_real.gif" alt="Open spectrum collapse (real)" width="700"/> <br> <em>Figure 1: Open limitis real valued. Computation performed for m=3, p = 4.5 and q = 6.5.</em> </p> <p align="center"> <img src="Figures/Open_limit_complex.gif" alt="Open spectrum collapse (complex)" width="700"/> <br> <em>Figure 2: Open limit contains complex values. Computation performed for m = 6, p = 1 and q = 6</em> </p>
+<p align="center"> <img src="Figures/Open_limit_real.gif" alt="Open spectrum collapse (real)" width="700"/> <br> <em>Figure 1: Open limit is real valued. Computation performed for m = 3, κ = 4.5 and ρ = 6.5.</em> </p> 
+
+<p align="center"> <img src="Figures/Open_limit_complex.gif" alt="Open spectrum collapse (complex)" width="700"/> <br> <em>Figure 2: Open limit contains complex values. Computation performed for m = 6, κ = 1 and ρ = 6.</em> </p>
 
 ## I.2 Reality of the Open Limit
 
-We verify numerically that the open limit produces real-valued spectra providet that $\Lambda(f_m)$ is traced out by a polar curve.
+We verify numerically that the open limit produces real-valued spectra provided that $\Lambda(f_m)$ is traced out by a polar curve.
 
 **Set $\Lambda(f)$** (`OpenLimit.m`)
 
@@ -35,53 +36,55 @@ We verify numerically that the open limit produces real-valued spectra providet 
 
 ## I.3 Homotopic transformation of the unit circle
 
-In this figure we illustrate that for a class of Toeplitz matrices, a Homotopy between the torus and the Generalised Brillouin zone uniformly collapses the winding region on the real axis.
+In this figure we illustrate that for a class of Toeplitz matrices, a homotopy between the torus and the Generalised Brillouin zone uniformly collapses the winding region on the real axis.
 
 **Symbol Homotopy** (`HomotopySymbolMovie.m`)
-<p align="center"> <img src="Figures/homotopy.gif" alt="Homotopy to Lambda" width="1200"/> <br> <em>Figure 1: A Homotopic transfromation from the unit torus to the set Λ(f), uniformly collapses the spectrum. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
 
-<p align="center"> <img src="Figures/homotopyCircle.gif" alt="Scaled unit circle" width="1200"/> <br> <em>Figure 1: A simple scaling of the unit torus is not enough to uniformly collapse the symbol function. Computation performed for m=9, p = 3.5 and q = 4.8.</em>
+<p align="center"> <img src="Figures/homotopy.gif" alt="Homotopy to Lambda" width="1200"/> <br> <em>Figure 1: A homotopic transformation from the unit torus to the set Λ(f) uniformly collapses the spectrum. Computation performed for m = 9, κ = 3.5 and ρ = 4.8.</em>
 
+<p align="center"> <img src="Figures/homotopyCircle.gif" alt="Scaled unit circle" width="1200"/> <br> <em>Figure 1: A simple scaling of the unit torus is not enough to uniformly collapse the symbol function. Computation performed for m = 9, κ = 3.5 and ρ = 4.8.</em>
 
-## I.4 Density of states under deformed dymbol path
+## I.4 Density of states under deformed symbol path
 
-We have demonstrated that for a class of non-Hermitian Toeplitz matrices $\mathbf{T}_n(f)$, the Density of states is equal to the denensitz of states of the ermitian matrix $\mathbf{T}_n(f \circ p)$. In the following numerical experiment, we will demonstrate that the empirical measure of $\mathbf{T}_n(f \circ p)$ converwges in distribution to the Density of states of $\mathbf{T}_n(f)$. 
+We have demonstrated that for a class of non-Hermitian Toeplitz matrices $\mathbf{T}_n(f)$, the density of states is equal to the density of states of the Hermitian matrix $\mathbf{T}_n(f \circ p)$. In the following numerical experiment, we will demonstrate that the empirical measure of $\mathbf{T}_n(f \circ p)$ converges in distribution to the density of states of $\mathbf{T}_n(f)$. 
 
-**Sow the convergence of the empirical measure to the DoS** (`QuasiSimilarity.m`)
+**Show the convergence of the empirical measure to the DoS** (`QuasiSimilarity.m`)
+
 <p align="center"> 
   <img src="Figures/DoSFigure.png" alt="DoS" width="700"/> 
 </p>
 
 ## I.5 Spectral Pollution
 
-In this figure we illustrate that it is a numerically challenging task to compute the eigenvalues of large non-Hermitianmatrices. Empirically from a matrix size of 100 and onwards, the poluution becomes noticable, which is why we propose to effectively precondition the non-Hermitian matrices, by deforming the symbol path.
+In this figure we illustrate that it is a numerically challenging task to compute the eigenvalues of large non-Hermitian matrices. Empirically, from a matrix size of 100 and onwards, the pollution becomes noticeable, which is why we propose to effectively precondition the non-Hermitian matrices by deforming the symbol path.
 
 **Spectral Pollution** (`PollutedEval.m`)
+
 <p align="center"> 
   <img src="Figures/Pollution.png" alt="Spectral Pollution" width="700"/> 
 </p>
 
 ## I.6 Density of states and spectral convergence
 
-The pontwise spectral convergence is captured by the $l^2$ distance of the eigenvalues
+The pointwise spectral convergence is captured by the $l^2$ distance of the eigenvalues
 
-$$d_\sigma\big(\mathbf{T}_n(f), \mathbf{T}_n(f\circ p)\big) := \sum_{k =1 }^n |\lambda_k-\tau_k| $$
+$$d_\sigma\big(\mathbf{T}_n(f), \mathbf{T}_n(f\circ p)\big) := \sum_{k = 1}^n |\lambda_k - \tau_k|$$
 
 **Pointwise spectral convergence** (`ConvergenceSpectrum.m`)
+
 <p align="center"> 
   <img src="Figures/SpectralConv.png" alt="Spectral Convergence" width="700"/> 
 </p>
 
 ## II.1 Generalised Brillouin and non-Hermitian Hamiltonian
 
-We Illustrate how the Genralised Brillouin zone may be used to predict the localisation strength in non-Hermitian Hamiltonians.
+We illustrate how the Generalised Brillouin zone may be used to predict the localisation strength in non-Hermitian Hamiltonians.
 
 **Set $\Lambda(f)$** (`GBZ_Hamiltonian.m`)
 
 <p align="center"> 
   <img src="Figures/UnitCircleCrossing.png" alt="GBZ" width="700"/> 
 </p>
-
 
 ## III. Citation
 
