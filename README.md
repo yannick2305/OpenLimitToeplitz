@@ -10,7 +10,7 @@
 
 **Abstract:** We provide the complete computational framework supporting the theoretical results in [1].
 
-  <sub>Last updated: January 26, 2026</sub>
+  <sub>Last updated: February 09, 2026</sub>
 
   
 ## I.1 Spectrum of Open Limit
